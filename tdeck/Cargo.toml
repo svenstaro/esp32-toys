@@ -5,7 +5,8 @@ authors = ["Sven-Hendrik Haase <svenstaro@gmail.com>"]
 edition = "2021"
 
 [profile.release]
-opt-level = "s"
+opt-level = 3
+lto = true
 
 [profile.dev]
 debug = true    # Symbols are nice and they don't increase the size on Flash

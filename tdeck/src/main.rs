@@ -1,10 +1,13 @@
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use anyhow::Result;
 use display_interface_spi::SPIInterfaceNoCS;
+use embedded_graphics::mono_font::ascii::FONT_8X13;
+use embedded_graphics::mono_font::MonoTextStyle;
 use embedded_graphics::pixelcolor::{Rgb565, Rgb888};
 use embedded_graphics::prelude::*;
 use embedded_graphics::primitives::{Circle, Line, PrimitiveStyle, Rectangle};
+use embedded_graphics::text::Text;
 use embedded_graphics_framebuf::FrameBuf;
 use esp_idf_hal::delay::Ets;
 use esp_idf_hal::gpio::PinDriver;
@@ -80,43 +83,25 @@ fn main() -> Result<()> {
         .init(&mut delay, Some(rst))
         .unwrap();
 
-    // let raw_image_data = ImageRawLE::new(include_bytes!("../examples/assets/ferris.raw"), 86);
-    // let ferris = Image::new(&raw_image_data, Point::new(0, 0));
-
-    // draw image on black background
-    // ferris.draw(&mut display).unwrap();
-
     let g = colorgrad::sinebow();
 
-    // loop {
-    //     // Line::new(Point::new(0, 0), Point::new(320, 240))
-    //     //     .into_styled(PrimitiveStyle::with_stroke(Rgb565::RED, 1))
-    //     //     .draw(&mut display)
-    //     //     .unwrap();
-    //     display.clear(Rgb565::RED).unwrap();
-    //
-    //     Circle::new(Point::new(10, 20), 30)
-    //         .into_styled(PrimitiveStyle::with_fill(Rgb565::WHITE))
-    //         .draw(&mut display)
-    //         .unwrap();
-    //     std::thread::sleep(Duration::from_millis(500));
-    //     // display.clear(Rgb565::BLACK).unwrap();
-    //     // std::thread::sleep(Duration::from_millis(500));
-    // }
-
-    let omg = std::thread::Builder::new()
+    let diplay_thread = std::thread::Builder::new()
         .stack_size(4096 * 40)
         .spawn(move || {
-            let mut framebuffer_data: [Rgb565; 320 * 240] = [Rgb565::BLACK; 320 * 240];
+            let mut framebuffer_data = [Rgb565::BLACK; 320 * 240];
             let mut fb = FrameBuf::new(&mut framebuffer_data, 320, 240);
+            let mut last_fps = 0;
+            let mut rainbow_offset = 0.0;
             loop {
+                let now = Instant::now();
+
                 for y in 0..240 {
-                    let rainbow_pos = (y as f32 / 240.0) as f64;
+                    let rainbow_pos = (y as f32 / 240.0) as f64 + rainbow_offset;
                     let color_at = g.at(rainbow_pos).to_rgba8();
                     let rgb = Rgb888::new(color_at[0], color_at[1], color_at[2]);
                     Line::new(Point::new(0, y), Point::new(320, y))
                         .into_styled(PrimitiveStyle::with_stroke(rgb.into(), 1))
-                        .draw(&mut display)
+                        .draw(&mut fb)
                         .unwrap();
                 }
                 Circle::with_center(Point::new(0, 0), 30)
@@ -127,16 +112,25 @@ fn main() -> Result<()> {
                     .into_styled(PrimitiveStyle::with_fill(Rgb565::BLUE))
                     .draw(&mut fb)
                     .unwrap();
+
+                let style = MonoTextStyle::new(&FONT_8X13, Rgb565::WHITE);
+                Text::new(&format!("FPS: {}", last_fps), Point::new(250, 10), style)
+                    .draw(&mut fb)
+                    .unwrap();
+
                 let area = Rectangle::new(Point::new(0, 0), fb.size());
-                // fb.as_image().draw(&mut display).unwrap();
 
                 display
                     .fill_contiguous(&area, fb.data.iter().copied())
                     .unwrap();
-                std::thread::sleep(Duration::from_millis(100));
+
+                last_fps = 1000 / now.elapsed().as_millis();
+                rainbow_offset += 0.01;
+
+                std::thread::sleep(Duration::from_millis(10));
             }
         })?;
-    omg.join().unwrap();
+    diplay_thread.join().unwrap();
 
     Ok(())
 }
