@@ -12,13 +12,13 @@ debug = true    # Symbols are nice and they don't increase the size on Flash
 opt-level = "z"
 
 [dependencies]
-log = "0.4.20"
-esp-idf-hal = "0.42"
-esp-idf-svc = "0.47"
-esp-idf-sys = { version = "0.33", features = ["binstart"] }
+log = "0.4"
+esp-idf-hal = "0.43"
+esp-idf-svc = "0.48"
+esp-idf-sys = { version = "0.34", features = ["binstart"] }
 display-interface-spi = "0.4.1"
 embedded-graphics = "0.8.1"
-embedded-svc = "0.26"
+embedded-svc = "0.27"
 mipidsi = "0.7.1"
 anyhow = "1"
 thiserror = "1"

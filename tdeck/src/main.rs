@@ -11,7 +11,7 @@ use esp_idf_sys::EspError;
 use display_interface_spi::SPIInterfaceNoCS;
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::*;
-use embedded_graphics::primitives::{Line, PrimitiveStyle};
+use embedded_graphics::primitives::{Circle, PrimitiveStyle};
 use esp_idf_sys as _;
 use log::*;
 use mipidsi::{Builder, Orientation};
@@ -36,6 +36,9 @@ fn main() -> Result<()> {
     let peripherals = Peripherals::take().unwrap();
     let spi = peripherals.spi2;
     let mut delay = Ets;
+
+    let mut board_poweron = PinDriver::output(peripherals.pins.gpio10)?;
+    board_poweron.set_high()?;
 
     let rst = PinDriver::output(peripherals.pins.gpio17)?;
     let dc = PinDriver::output(peripherals.pins.gpio11)?;
@@ -82,8 +85,6 @@ fn main() -> Result<()> {
     // draw image on black background
     // ferris.draw(&mut display).unwrap();
 
-    println!("Image printed!");
-
     // let g = colorgrad::rainbow();
 
     loop {
@@ -91,11 +92,15 @@ fn main() -> Result<()> {
         //     .into_styled(PrimitiveStyle::with_stroke(Rgb565::RED, 1))
         //     .draw(&mut display)
         //     .unwrap();
-        println!("Looping");
         display.clear(Rgb565::RED).unwrap();
+
+        Circle::new(Point::new(10, 20), 30)
+            .into_styled(PrimitiveStyle::with_fill(Rgb565::WHITE))
+            .draw(&mut display)
+            .unwrap();
         std::thread::sleep(Duration::from_millis(500));
-        display.clear(Rgb565::BLACK).unwrap();
-        std::thread::sleep(Duration::from_millis(500));
+        // display.clear(Rgb565::BLACK).unwrap();
+        // std::thread::sleep(Duration::from_millis(500));
     }
     // std::thread::spawn(move || loop {
     // for y in 0..240 {

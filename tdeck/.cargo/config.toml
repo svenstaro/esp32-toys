@@ -10,7 +10,7 @@ build-std = ["std", "panic_abort"]
 
 [env]
 # See here for config options: https://github.com/esp-rs/esp-idf-sys/blob/master/BUILD_OPTIONS.md
-ESP_IDF_VERSION = "v5.1.2"
+ESP_IDF_VERSION = "v5.2.1"
 
 # These variables will ensure that the local partitions.csv is copied into the
 # esp-idf build directory during compile time.
